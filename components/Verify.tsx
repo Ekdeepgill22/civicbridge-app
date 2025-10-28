@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View,Text,TextInput,TouchableOpacity,StyleSheet,ActivityIndicator} from 'react-native';
+import React, { useRef, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface VerifyProps {

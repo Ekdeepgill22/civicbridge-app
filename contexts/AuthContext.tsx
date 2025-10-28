@@ -1,9 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { onAuthStateChanged, User as FirebaseUser, ConfirmationResult } from "firebase/auth";
-import { auth,db } from "@/constants/firebase";
-import { doc,getDoc } from "firebase/firestore";
 import { User } from "@/modals/user";
-import { useRouter,useSegments } from "expo-router";
+import { useRouter, useSegments } from "expo-router";
+import { ConfirmationResult, User as FirebaseUser, onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
   user: FirebaseUser | null;

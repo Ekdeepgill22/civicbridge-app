@@ -1,10 +1,10 @@
-import React, {useState, useEffect} from "react";
-import {View,Text,TextInput,TouchableOpacity,StyleSheet,ActivityIndicator,Platform,Alert,Image} from 'react-native';
-import { UserExists, sendOtp, verifyOtp, intializeRecaptcha, clearRecaptcha } from "@/services/authservice";
-import { useRouter } from 'expo-router';
-import { useAuth } from "@/contexts/AuthContext";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Verify from '@/components/Verify';
+import { useAuth } from "@/contexts/AuthContext";
+import { UserExists, clearRecaptcha, intializeRecaptcha, sendOtp, verifyOtp } from "@/services/authservice";
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function loginpage(){

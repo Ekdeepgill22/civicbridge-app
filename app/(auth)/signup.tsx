@@ -1,12 +1,12 @@
-import React, {useState,useEffect} from "react";
-import {View,Text,TextInput,TouchableOpacity,StyleSheet,ActivityIndicator,Platform,Alert,Image,KeyboardAvoidingView,ScrollView,} from 'react-native';
-import { UserExists, sendOtp, verifyOtp, createUser, intializeRecaptcha, clearRecaptcha } from "@/services/authservice";
-import { useRouter } from 'expo-router';
-import { useAuth } from "@/contexts/AuthContext";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Verify from '@/components/Verify';
+import { useAuth } from "@/contexts/AuthContext";
 import { User } from "@/modals/user";
+import { UserExists, createUser, sendOtp, verifyOtp, } from "@/services/authservice";
+import { useRouter } from 'expo-router';
 import { Timestamp } from "firebase/firestore";
+import React, { useState } from "react";
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function signup (){
 
@@ -19,20 +19,6 @@ export default function signup (){
     const [ loading, setLoading ] = useState(false);
     const [ error, setError] = useState('');
     const [ recaptchReady,setRecaptchaReady] = useState(false);
-
-    useEffect(()=>{
-        try{
-        const verifier = intializeRecaptcha('recaptcha-container');
-        verifier.render().then(()=>{
-            setRecaptchaReady(true);
-        });
-        }catch(err){
-        console.error("Error intializing reCAPTCHA: ",err);
-        }
-        return ()=>{
-        clearRecaptcha();
-        };
-    }, []);
 
     const handlesignup = async() =>{
         if(name.trim().length < 2){
@@ -49,11 +35,6 @@ export default function signup (){
             );
             return;
         }
-        if(!recaptchReady){
-            Alert.alert('Error','reCAPTCHA not ready. Please try again.');
-            return;
-        }
-
         setLoading(true);
         setError('')
         try{
@@ -77,20 +58,13 @@ export default function signup (){
                 return;
             }
             const phoneNumber = `+91${contact}`
-            const verifier = intializeRecaptcha('recaptcha-container');
-            const confirmResult = await sendOtp(phoneNumber, verifier);
+            const confirmResult = await sendOtp(phoneNumber);
             setConfirmation(confirmResult);
             setStep('otp');
         }catch(err: any){
             console.log("Error during signup: ", err);
             Alert.alert('Error', 'Something went wrong. Please try again');
             setError(err.message || 'Failed to send OTP. Please try again.');
-            
-            clearRecaptcha();
-            const verifier = intializeRecaptcha('recaptcha-container');
-            verifier.render().then(()=>{
-            setRecaptchaReady(true);
-            });
         }finally{
             setLoading(false);
         }
