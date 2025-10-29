@@ -1,76 +1,55 @@
-import { User } from "@/modals/user";
-import { useRouter, useSegments } from "expo-router";
-import { ConfirmationResult, User as FirebaseUser, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { auth } from '@/constants/firebase';
+import { FirebaseAuthTypes, onAuthStateChanged } from '@react-native-firebase/auth';
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextType {
-  user: FirebaseUser | null;
-  userProfile : User | null;
-  confirmation: ConfirmationResult | any;
-  setConfirmation: (confirmation: ConfirmationResult | null) => void;
+  user: FirebaseAuthTypes.User | null;
+  confirmation: FirebaseAuthTypes.ConfirmationResult | null;
+  setConfirmation: (confirmation: FirebaseAuthTypes.ConfirmationResult | null) => void;
   loading: boolean;
-  signOut: ()=> Promise<void>
+  initializing: boolean;
+  signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  confirmation: null,
+  setConfirmation: () => {},
+  loading: false,
+  initializing: true,
+  signOut: async () => {},
+});
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [ user,setUser ] = useState<FirebaseUser | null>(null);
-  const [ userProfile,setUserProfile ] = useState<User | null>(null);
-  const [ confirmation,setConfirmation ] =  useState<ConfirmationResult | null>(null);
-  const [ loading,setLoading ] = useState(true);
-  const router = useRouter();
-  const segments = useSegments();
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const [confirmation, setConfirmation] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
 
-  useEffect(()=>{
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser)=>{
-      setUser(firebaseUser);
-
-      if(firebaseUser){
-        try{
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.phoneNumber?.slice(3) || ''));
-          if(userDoc.exists()){
-            setUserProfile(userDoc.data() as User);
-          }
-        }catch(err){
-          console.error('Error fetching user profile', err);
-        }
-      }else{
-        setUserProfile(null);
-      }
-      setLoading(false);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth ,(authUser) => {
+      setUser(authUser);
+      if (initializing) setInitializing(false);
     });
+
     return unsubscribe;
   }, []);
 
-// Route Protection and keeping signed in
-  useEffect(() => {
-    if(loading) return;
-
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if(!user && !inAuthGroup){
-      router.replace('/');
-    }else if(user && inAuthGroup){
-      router.replace('/(screens)/home');
-    }
-  }, [user, segments, loading]);
-
-  const signOut = async() =>{
-    try{
+  const signOut = async () => {
+    try {
+      setLoading(true);
       await auth.signOut();
-      setUser(null);
-      setUserProfile(null);
-      router.replace('/(auth)/login');
-    }catch(err){
-      console.error('Error while signing out: ', err)
-      throw err
-    };
-  }
+      setConfirmation(null);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user,userProfile,confirmation,setConfirmation,loading,signOut }}>
+    <AuthContext.Provider value={{ user,confirmation,setConfirmation,loading,initializing,signOut }}>
       {children}
     </AuthContext.Provider>
   );

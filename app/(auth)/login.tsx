@@ -1,8 +1,8 @@
 import Verify from '@/components/Verify';
 import { useAuth } from "@/contexts/AuthContext";
-import { UserExists, clearRecaptcha, intializeRecaptcha, sendOtp, verifyOtp } from "@/services/authservice";
+import { UserExists, sendOtp, verifyOtp } from "@/services/authservice";
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ActivityIndicator, Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,21 +17,6 @@ export default function loginpage(){
     const [ error, setError] = useState('');
     const [ recaptchReady,setRecaptchaReady] = useState(false);
 
-    useEffect(()=>{
-      try{
-        const verifier = intializeRecaptcha('recaptcha-container');
-        verifier.render().then(()=>{
-          console.log('reCAPTCHA rendered');
-          setRecaptchaReady(true);
-        });
-      }catch(err){
-        console.error("Error intializing reCAPTCHA: ",err);
-      }
-      return ()=>{
-        clearRecaptcha();
-      };
-    }, []);
-
     const handleVerifyPhone = async() =>{
       if(contact.length !==10 ){
               Alert.alert(
@@ -40,18 +25,13 @@ export default function loginpage(){
               );
               return;
             }
-        if(!recaptchReady){
-          Alert.alert('Error','reCAPTCHA not ready. Please try again.');
-          return;
-        }
         setLoading(true);
         setError('');
         try{
             const exists = await UserExists(contact);
             if(exists){
                 const phonenumber = `+91${contact}`;
-                const verifier = intializeRecaptcha('recaptcha-container');
-                const confirmresult = await sendOtp(phonenumber, verifier);
+                const confirmresult = await sendOtp(phonenumber);
                 setConfirmation(confirmresult);
                 setStep('otp');
             }else{
@@ -74,12 +54,6 @@ export default function loginpage(){
             console.log("Error during sign in ",err);
             Alert.alert('Error', 'Something went wrong. Please try again');
             setError(err.message || 'Failed to send OTP. Please try again.');
-
-            clearRecaptcha();
-            const verifier = intializeRecaptcha('recaptcha-container');
-            verifier.render().then(()=>{
-            setRecaptchaReady(true);
-            });
         }finally{
           setLoading(false);
         }
@@ -154,9 +128,6 @@ export default function loginpage(){
           </View>
 
           {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-           {/* reCAPTCHA Container - invisible */}
-          <View id="recaptcha-container" style={{ display: 'none' }}></View>
 
           {/* Continue Button */}
           <TouchableOpacity
