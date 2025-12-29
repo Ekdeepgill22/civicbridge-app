@@ -2,12 +2,19 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { User } from "../modals/user";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { technicians } from '../modals/technician';
+
+type AuthType = 'user' | 'technician' | null;
 
 interface AuthContextType {
   user: any | null;
+  technician : any | null;
   userProfile : User | null;
+  technicianProfile : technicians | null;
+  authType: AuthType;
   confirmation: any;
   setConfirmation: (confirmation: any | null) => void;
+  setAuthType: (type: AuthType) => void;
   loading: boolean;
   signOut: ()=> Promise<void>
 }
@@ -16,15 +23,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [ user,setUser ] = useState<any | null>(null);
+  const [ technician, setTechnician] = useState<any | null>(null);
   const [ userProfile,setUserProfile ] = useState<User | null>(null);
+  const [ technicianProfile, setTechnicianProfile] = useState<technicians | null>(null);
   const [ confirmation,setConfirmation ] =  useState<any | null>(null);
   const [ loading,setLoading ] = useState(true);
+  const [ authType, setAuthType] = useState<AuthType>(null);
 
   useEffect(()=>{
     const unsubscribe = auth().onAuthStateChanged( async (firebaseUser)=>{
-      setUser(firebaseUser);
-
-      if(firebaseUser){
+      if(!firebaseUser){
+          setUser(null);
+          setTechnician(null);
+          setUserProfile(null);
+          setTechnicianProfile(null);
+          setAuthType(null);
+          setLoading(false);
+        return;
+      }
+      if(!authType){
+        setLoading(false);
+        return;
+      }
+      if(authType === 'user'){
+        setUser(firebaseUser);
         try{
           const phone = firebaseUser.phoneNumber?.replace('+91', '');
           const email = firebaseUser.email;
@@ -52,19 +74,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }catch(err){
           console.error('Error fetching user profile', err);
         }
-      }else{
-        setUserProfile(null);
+      }else if(authType === 'technician'){
+        setTechnician(firebaseUser);
+        try{
+          const email = firebaseUser.email;
+          let technicianDoc = null;
+
+          if(email){
+            const emailSnap = await firestore().collection('technicians').where('email', '==', email).get();
+            if(!emailSnap.empty){
+              technicianDoc = emailSnap.docs[0];
+            }
+          }
+          if(technicianDoc){
+            setTechnicianProfile(technicianDoc.data() as technicians);
+          }else{
+            setTechnicianProfile(null);
+          }
+        }catch(err){
+          console.error('Error fetching technician profile', err);
+        }
       }
-      setLoading(false);
+      setLoading(false)
     });
     return unsubscribe;
-  }, []);
+  }, [authType]);
 
   const signOut = async() =>{
     try{
-      await auth().signOut();
-      setUser(null);
-      setUserProfile(null);
+        setUser(null);
+        setUserProfile(null);
+        setTechnician(null);
+        setTechnicianProfile(null);
+        setAuthType(null);
     }catch(err){
       console.error('Error while signing out: ', err)
       throw err
@@ -72,7 +114,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user,userProfile,confirmation,setConfirmation,loading,signOut }}>
+    <AuthContext.Provider value={{ user,userProfile,technician,technicianProfile,authType,setAuthType,confirmation,setConfirmation,loading,signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -56,3 +56,26 @@ export const loginWithEmail = async(email:string, password:string) => {
         throw err;
     }
 }
+
+export const TechnicianLogin = async(email: string, password:string) => {
+    try{
+        const userRef = await firestore().collection('technicians').where("email", "==", email).limit(1).get();
+        
+        if(userRef.empty){
+            console.error("Invalid Credentials");
+        }
+
+        const technician = userRef.docs[0].data();
+        if(technician.password != password){
+            throw new Error("Invalid Credentials");
+        }
+
+        return {
+            id: userRef.docs[0].id,
+            ...technician
+        }
+    }catch(err){
+        console.error("Error While logging in as Technician", err);
+        throw err;
+    }
+};

@@ -10,6 +10,14 @@ export default function OnboardingScreen() {
   const navigation = useNavigation<indexNavProp>()
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.SkipContainer}>
+        <TouchableOpacity 
+        activeOpacity={0.8}
+        style={styles.buttonskip}
+        onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.buttonSkipText}>Skip</Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.content}>
         <View style={styles.imageContainer}>
           <Image
@@ -30,14 +38,14 @@ export default function OnboardingScreen() {
         <TouchableOpacity
           style={styles.buttonPrimary}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.buttonPrimaryText}>Continue with Phone Number</Text>
+          onPress={() => navigation.navigate('LoginEmail')}>
+          <Text style={styles.buttonPrimaryText}>Continue as Complainant</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.buttonSecondary}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate('LoginEmail')}>
-          <Text style={styles.buttonSecondaryText}>Continue with Email</Text>
+          onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.buttonSecondaryText}>Continue as Technician</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -89,6 +97,29 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     paddingHorizontal: 20,
   },
+
+  SkipContainer : {
+    alignItems: 'flex-end' ,
+    marginBottom: 40,
+    marginTop: 12,
+    marginRight:5
+  },
+
+  buttonskip : {
+    backgroundColor: '#1f3b6eff',
+    paddingVertical: 7,
+    paddingHorizontal: 13,
+    borderRadius: 20,
+    alignItems: 'center',
+    elevation: 3,
+  },
+
+  buttonSkipText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+
   buttonPrimary: {
     backgroundColor: '#7abb6dff',
     paddingVertical: 16,

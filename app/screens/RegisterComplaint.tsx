@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, Modal} from "react-native";
 import firestore from "@react-native-firebase/firestore";
-import storage from "@react-native-firebase/storage";
 import { launchImageLibrary } from "react-native-image-picker";
 import { useAuth } from "../contexts/AuthContext";
 import { Category } from "../modals/complaint";
@@ -9,43 +8,40 @@ import DropDownPicker from "react-native-dropdown-picker";
 import RNFS from "react-native-fs";
 import { Image as ImageCompressor } from "react-native-compressor";
 import Loader from "../components/Loader";
-import MapView, { Marker } from "react-native-maps";
-import Geolocation from "react-native-geolocation-service";
-import { request, PERMISSIONS, RESULTS } from "react-native-permissions";
 
 
-async function reverseGeocode(lat, lon){
-  try{
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
-    );
-    const json = await res.json();
-    return json.display_name || `${lat}, ${lon}`;
-  }catch(err){
-    return `${lat}, ${lon}`;
-  }
-}
+// async function reverseGeocode(lat, lon){
+//   try{
+//     const res = await fetch(
+//       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+//     );
+//     const json = await res.json();
+//     return json.display_name || `${lat}, ${lon}`;
+//   }catch(err){
+//     return `${lat}, ${lon}`;
+//   }
+// }
 
-async function getUserLocation(){
-  const result = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
+// async function getUserLocation(){
+//   const result = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
 
-  return new Promise((resolve, reject) => {
-    if(result === RESULTS.GRANTED){
-      Geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (err) => reject(err),
-        { enableHighAccuracy: true, timeout: 15000 }
-      );
-    }else{
-      reject("Location permission denied");
-    }
-  });
-}
+//   return new Promise((resolve, reject) => {
+//     if(result === RESULTS.GRANTED){
+//       Geolocation.getCurrentPosition(
+//         (position) => {
+//           resolve({
+//             latitude: position.coords.latitude,
+//             longitude: position.coords.longitude,
+//           });
+//         },
+//         (err) => reject(err),
+//         { enableHighAccuracy: true, timeout: 15000 }
+//       );
+//     }else{
+//       reject("Location permission denied");
+//     }
+//   });
+// }
 
 export default function RegisterComplaint() {
 
@@ -124,16 +120,16 @@ export default function RegisterComplaint() {
   //   return await ref.getDownloadURL();
   // }
 
-  async function openMapPicker(){
-    try{
-      const pos = await getUserLocation();
+  // async function openMapPicker(){
+  //   try{
+  //     const pos = await getUserLocation();
 
-      setInitialRegion({
-        latitude: pos.latitude,
+  //     setInitialRegion({
+  //       latitude: pos.latitude,
          
-      })
-    }
-  }
+  //     })
+  //   }
+  // }
 
   // function closeMapPicker(){
   //   setMapVisible(false);
@@ -233,14 +229,6 @@ export default function RegisterComplaint() {
         <View style={{ zIndex: 2000 }}>
         <Text style={styles.label}>Address</Text>
         <TextInput style={styles.input} placeholder="Enter complaint Address" placeholderTextColor="#605e5eff" value={address} onChangeText={setAddress} />
-        {/* <TouchableOpacity style={[styles.button, {marginTop: 8}]} onPress={openMapPicker}>
-          <Text style={styles.button}>Pick Location on Map</Text>
-        </TouchableOpacity>
-        {location && (
-          <Text style={{ marginTop: 6 , fontSize: 12, color:"#555"}}>
-            Selected: { location.latitude.toFixed(5)}, { location.longitude.toFixed(5)}
-          </Text>
-        )} */}
         </View>
         <View style={{ zIndex: 1000 }}>
         <Text style={styles.label}>Upload Image</Text>
@@ -257,56 +245,6 @@ export default function RegisterComplaint() {
           <Text style={styles.buttonText}>{ submitting ? "Submitting....": "Submit Compalint"}</Text>
         </TouchableOpacity>
       </View>
-      {/* <Modal visible={mapVisible} animationType="slide">
-  <View style={{ flex: 1 }}>
-    <MapView
-      style={{ flex: 1 }}
-      onPress={handleMapPress}
-      initialRegion={{
-        latitude: tempLocation?.latitude || 28.6139,
-        longitude: tempLocation?.longitude || 77.2090,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }}
-    >
-      {tempLocation && (
-        <Marker coordinate={tempLocation} />
-      )}
-    </MapView>
-
-    <View
-      style={{
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: 16,
-        backgroundColor: "rgba(255,255,255,0.9)",
-      }}
-    >
-      <Text style={{ marginBottom: 8, textAlign: "center", fontWeight: "600" }}>
-        Tap on the map to choose location
-      </Text>
-
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <TouchableOpacity
-          style={[styles.button, { flex: 1, marginRight: 8, backgroundColor: "#ff4d4d" }]}
-          onPress={closeMapPicker}
-        >
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, { flex: 1, marginLeft: 8, backgroundColor: "#1f3b6e" }]}
-          onPress={confirmLocationFromMap}
-        >
-          <Text style={styles.buttonText}>Use this location</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal> */}
-
     </ScrollView>
   );
 }
