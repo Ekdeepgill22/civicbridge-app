@@ -10,6 +10,7 @@ import LoginPage from "../screens/login";
 import Verify from "../screens/Verify";
 import LoginEmailPage from "../screens/loginEmail";
 import EmailSignupPage from "../screens/signupemail";
+import technicianLogin from "../screens/technicianlogin";
 
 import AppTabs from "./Apptabs";
 
@@ -32,6 +33,7 @@ export default function AppNavigator() {
             <Stack.Screen name="Verify" component={Verify} />
             <Stack.Screen name="LoginEmail" component={LoginEmailPage} />
             <Stack.Screen name="EmailSignup" component={EmailSignupPage} />
+            <Stack.Screen name="TechnicianLogin" component={technicianLogin} />
           </>
         )}
 

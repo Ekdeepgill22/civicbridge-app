@@ -7,4 +7,5 @@ export type AuthStackParamList = {
   AppTabs: undefined;
   LoginEmail: undefined;
   EmailSignup : undefined;
+  TechnicianLogin: undefined;
 };

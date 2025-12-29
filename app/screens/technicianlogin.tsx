@@ -1,4 +1,4 @@
-import { loginWithEmail } from "../services/authservice";
+import { TechnicianLogin } from "../services/authservice";
 import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import { ActivityIndicator,Alert,StyleSheet,Text,TextInput,TouchableOpacity,View} from "react-native";
@@ -7,9 +7,9 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type LoginNavProp = NativeStackNavigationProp<AuthStackParamList, "LoginEmail">;
+type LoginNavProp = NativeStackNavigationProp<AuthStackParamList, "TechnicianLogin">;
 
-export default function LoginEmailPage() {
+export default function technicianLogin() {
   const navigation = useNavigation<LoginNavProp>();
 
   const [email, setEmail] = useState("");
@@ -38,8 +38,8 @@ export default function LoginEmailPage() {
     setLoading(true);
 
     try {
-      const user = await loginWithEmail(email, password);
-      console.log("Logged in:", user.uid);
+      const technician = await TechnicianLogin(email, password);
+      console.log("Logged in:", technician.id);
 
       navigation.navigate("AppTabs"); 
     } catch (err: any) {
@@ -49,16 +49,7 @@ export default function LoginEmailPage() {
 
       if (err) {
         errorMsg = "No account exists with this email.";
-        Alert.alert(
-          "User Not Found",
-          "Would you like to sign up?",
-          [
-            {
-              text: "Sign Up",
-            },
-            { text: "Cancel", style: "cancel" },
-          ]
-        );
+        Alert.alert("Technician Not Found");
       }
 
       setError(errorMsg);
@@ -73,7 +64,7 @@ export default function LoginEmailPage() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Login as Complainant</Text>
+          <Text style={styles.title}>Login as Technician</Text>
           <Text style={styles.subtitle}>
             Enter your email and password to continue
           </Text>
@@ -130,16 +121,6 @@ export default function LoginEmailPage() {
               <Text style={styles.buttonText}>Login</Text>
             )}
           </TouchableOpacity>
-
-          {/* Signup Link */}
-          <TouchableOpacity
-            style={styles.signupContainer}
-            onPress={() => navigation.navigate("EmailSignup")}
-          >
-            <Text style={styles.signupText}>
-              New user? <Text style={styles.signupLink}>Sign up</Text>
-            </Text>
-          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -151,7 +132,7 @@ const styles = StyleSheet.create({
   content: { flex: 1, paddingHorizontal: 24, paddingTop: 60 },
   header: { marginBottom: 50 },
   title: {
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: "700",
     color: "#1f3b6eff",
     marginBottom: 12,
