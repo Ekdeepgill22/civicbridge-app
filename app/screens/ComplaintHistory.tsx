@@ -1,14 +1,19 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import { useEffect, useState } from "react";
 import firestore from "@react-native-firebase/firestore";
 import { useAuth } from "../contexts/AuthContext";
 import { Complaint } from "../modals/complaint";
 import Loader from "../components/Loader";
+import UserComplaintViewModal from "../components/UserComplaintViewModal";
+
 export default function ComplaintHistory() {
 
   const { user } = useAuth();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [ loading, setLoading ] = useState(true);
+  const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [refreshing,setRefreshing] = useState(false);
 
   useEffect(() =>{
     const unsubscribe = firestore().collection("complaints").where("user_id", "==", user.uid).orderBy("submitted_at", "desc")
@@ -30,24 +35,28 @@ export default function ComplaintHistory() {
   }, [user]);
 
   function refreshHistory(){
-    setLoading(true);
+     setRefreshing(true);
 
     firestore().collection("complaints").where("user_id","==", user.uid).orderBy("submitted_at", "desc").get()
     .then(snapshot =>{
       const list: Complaint[] = [];
       snapshot.forEach(doc => list.push({ ...doc.data(), doc_id: doc.id } as Complaint));
       setComplaints(list);
-      setLoading(false);
     }).catch(err => {
       console.error("Refresh failed:", err);
-      setLoading(false);
+      setRefreshing(false);
+    }).finally(() => {
+      setRefreshing(false);
     });
   }
 
   if (loading) return <Loader />;
 
   return (
-    <ScrollView style={styles.container}>
+    <>
+    <ScrollView style={styles.container} refreshControl={
+    <RefreshControl refreshing={refreshing} onRefresh={refreshHistory} colors={["#1f3b6e"]} tintColor="#1f3b6e"/>
+      }>
       <View style={styles.header}>
         <Text style={styles.heading}>Your Complaint History</Text>
       </View>
@@ -76,14 +85,26 @@ export default function ComplaintHistory() {
             <Text style={styles.item}>
               Address: {c.address.toLowerCase().split(" ").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}
             </Text>
+            <TouchableOpacity style={styles.viewBtn} onPress={() => {
+              setSelectedComplaint(c);
+              setModalVisible(true);
+            }}>
+            <Text style={styles.viewText}>View</Text>
+          </TouchableOpacity>
           </View>
         ))
       )}
-      <TouchableOpacity style={styles.refreshBtn} onPress={refreshHistory}>
-        <Text style={styles.refreshText}>Refresh</Text>
-      </TouchableOpacity>
       </View>
     </ScrollView>
+    <UserComplaintViewModal
+      visible={modalVisible}
+      complaint={selectedComplaint}
+      onClose={() => {
+        setModalVisible(false);
+        setSelectedComplaint(null);
+      }}
+    />
+    </>
   );
 }
 
@@ -187,4 +208,18 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 15,
   },
+  
+  viewBtn: {
+  marginTop: 10,
+  backgroundColor: "#1f3b6e",
+  paddingVertical: 8,
+  borderRadius: 8,
+  alignItems: "center",
+},
+
+viewText: {
+  color: "#fff",
+  fontWeight: "700",
+  fontSize: 14,
+},
 });

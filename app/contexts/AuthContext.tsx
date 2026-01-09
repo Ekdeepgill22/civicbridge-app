@@ -15,6 +15,7 @@ interface AuthContextType {
   confirmation: any;
   setConfirmation: (confirmation: any | null) => void;
   setAuthType: (type: AuthType) => void;
+  setTechnicianProfile: (profile: technicians | null) => void;
   loading: boolean;
   signOut: ()=> Promise<void>
 }
@@ -32,21 +33,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(()=>{
     const unsubscribe = auth().onAuthStateChanged( async (firebaseUser)=>{
+      if(authType==='technician'){
+        setLoading(false);
+      }
       if(!firebaseUser){
           setUser(null);
-          setTechnician(null);
           setUserProfile(null);
-          setTechnicianProfile(null);
-          setAuthType(null);
           setLoading(false);
         return;
       }
-      if(!authType){
-        setLoading(false);
-        return;
-      }
       if(authType === 'user'){
-        setUser(firebaseUser);
+      setUser(firebaseUser);
         try{
           const phone = firebaseUser.phoneNumber?.replace('+91', '');
           const email = firebaseUser.email;
@@ -65,7 +62,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               userDoc = emailSnap.docs[0];
             }
           }
-
           if(userDoc){
             setUserProfile(userDoc.data() as User);
           }else{
@@ -73,35 +69,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }catch(err){
           console.error('Error fetching user profile', err);
+        }finally{
+          setLoading(false);
         }
-      }else if(authType === 'technician'){
-        setTechnician(firebaseUser);
-        try{
-          const email = firebaseUser.email;
-          let technicianDoc = null;
-
-          if(email){
-            const emailSnap = await firestore().collection('technicians').where('email', '==', email).get();
-            if(!emailSnap.empty){
-              technicianDoc = emailSnap.docs[0];
-            }
-          }
-          if(technicianDoc){
-            setTechnicianProfile(technicianDoc.data() as technicians);
-          }else{
-            setTechnicianProfile(null);
-          }
-        }catch(err){
-          console.error('Error fetching technician profile', err);
-        }
+      }else{
+        setLoading(false);
       }
-      setLoading(false)
     });
     return unsubscribe;
   }, [authType]);
 
   const signOut = async() =>{
     try{
+      if(authType === 'user'){
+          await auth().signOut();
+        }
         setUser(null);
         setUserProfile(null);
         setTechnician(null);
@@ -114,7 +96,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user,userProfile,technician,technicianProfile,authType,setAuthType,confirmation,setConfirmation,loading,signOut }}>
+    <AuthContext.Provider value={{ user,userProfile,technician,technicianProfile,authType,setAuthType,setTechnicianProfile,confirmation,setConfirmation,loading,signOut }}>
       {children}
     </AuthContext.Provider>
   );

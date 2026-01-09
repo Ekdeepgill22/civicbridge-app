@@ -4,6 +4,7 @@ export interface Complaint {
     doc_id?: string,
     complaint_id: string,
     user_id: string,
+    user_email: string,
     assigned_to_id: string,
     title: string,
     description: string,
@@ -16,6 +17,12 @@ export interface Complaint {
     status: Status,
     updated_at: Timestamp,
     resolution_note: string,
+    technician_name: string,
+    technician_contact: string,
+    complaint_email_send: boolean,
+    user_name: string,
+    technician_assigned_email_send: boolean,
+    compalint_resolved_email: boolean,
 }
 
 export type Category = 

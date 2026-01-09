@@ -7,5 +7,6 @@ export interface User {
     created_at: FirebaseFirestoreTypes.Timestamp;  
     email?: string,
     address: string,
-    city: string
+    city: string,
+    account_email_send: boolean,
 }

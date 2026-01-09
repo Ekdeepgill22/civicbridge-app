@@ -1,3 +1,5 @@
+import { FirebaseFirestoreTypes } from "@react-native-firebase/firestore";
+
 export interface technicians {
     assigned_to_id: string,
     name: string,
@@ -9,6 +11,7 @@ export interface technicians {
     current_complaint: string,
     email: string,
     password: string
+    created_at: FirebaseFirestoreTypes.Timestamp;
 }
 
 export type Category = 

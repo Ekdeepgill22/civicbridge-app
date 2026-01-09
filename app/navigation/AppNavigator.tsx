@@ -13,20 +13,26 @@ import EmailSignupPage from "../screens/signupemail";
 import technicianLogin from "../screens/technicianlogin";
 
 import AppTabs from "./Apptabs";
+import TechnicianTabs from "./TechnicianTabs";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AppNavigator() {
-  const { user, loading } = useAuth();
+  const { user, technicianProfile, authType, loading } = useAuth();
   if (loading) return null;
 
+   const isAuthenticated =(authType === "user" && user) ||(authType === "technician" && technicianProfile);
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
 
-        {user ? (
+        {isAuthenticated ? (
+          authType === 'user' ? (
           <Stack.Screen name="AppTabs" component={AppTabs} />
         ) : (
+          <Stack.Screen name = "TechnicianTabs" component= {TechnicianTabs}/>
+          )
+        )  : (          
           <>
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Login" component={LoginPage} />
