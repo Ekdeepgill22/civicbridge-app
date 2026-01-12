@@ -1,6 +1,7 @@
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import { User } from '../modals/user';
+import { technicians } from '../modals/technician';
 
 export const UserExists = async(contact: string)=>{
     const userRef = await firestore().collection('users').where('contact', '==', contact).get();
@@ -57,22 +58,25 @@ export const loginWithEmail = async(email:string, password:string) => {
     }
 }
 
-export const TechnicianLogin = async(email: string, password:string) => {
+export const TechnicianLogin = async(email: string, password:string) : Promise<technicians>=> {
     try{
         const userRef = await firestore().collection('technicians').where("email", "==", email).limit(1).get();
         
         if(userRef.empty){
             console.error("Invalid Credentials");
+            throw new Error("Invalid Credentials");
         }
 
-        const technician = userRef.docs[0].data();
-        if(technician.password != password){
+        const technicianDoc = userRef.docs[0];
+        const technicianData = technicianDoc.data() as technicians;
+
+        if(technicianData.password !== password){
             throw new Error("Invalid Credentials");
         }
 
         return {
-            id: userRef.docs[0].id,
-            ...technician
+             ...technicianData,
+            assigned_to_id: technicianDoc.id,
         }
     }catch(err){
         console.error("Error While logging in as Technician", err);

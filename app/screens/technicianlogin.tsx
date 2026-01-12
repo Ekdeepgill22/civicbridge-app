@@ -6,6 +6,7 @@ import Ionicons from '@react-native-vector-icons/ionicons';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../contexts/AuthContext";
 
 type LoginNavProp = NativeStackNavigationProp<AuthStackParamList, "TechnicianLogin">;
 
@@ -17,6 +18,7 @@ export default function technicianLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const {setAuthType, setTechnicianProfile} = useAuth();
 
   const validateEmail = (email: string) => {
     const pattern = /\S+@\S+\.\S+/;
@@ -39,9 +41,10 @@ export default function technicianLogin() {
 
     try {
       const technician = await TechnicianLogin(email, password);
-      console.log("Logged in:", technician.id);
-
-      navigation.navigate("AppTabs"); 
+      console.log("FULL TECHNICIAN:", technician);
+      console.log("Logged in:", technician.name);
+      setAuthType('technician');
+      setTechnicianProfile(technician);
     } catch (err: any) {
       console.error(err);
 

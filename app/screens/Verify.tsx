@@ -15,6 +15,7 @@ export default function Verify()
   {
   const route = useRoute<VerifyRouteProp>();
   const navigation = useNavigation<VerifyNavProp>();
+  const {setAuthType} = useAuth();
 
   const { confirmation } = useAuth(); 
   const phoneNumber : string | any = route.params.phoneNumber;
@@ -22,6 +23,7 @@ export default function Verify()
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  
 
   const handleChangeText = (text: string, index: number) => {
     setError('');
@@ -49,7 +51,6 @@ export default function Verify()
     
     if (!confirmation) {
       setError('No confirmation found. Please request OTP again.');
-      navigation.navigate('Login');
       return;
     }
 
@@ -59,7 +60,7 @@ export default function Verify()
     try {
       const result = await verifyOtp(confirmation, otpCode);
       if(result) {
-        navigation.navigate("AppTabs");
+        setAuthType('user');
       }else{
         setError('Verification failed. Please try again')
       }
