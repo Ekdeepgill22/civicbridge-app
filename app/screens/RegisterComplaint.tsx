@@ -1,51 +1,19 @@
 import { useState } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Image, Alert, Modal} from "react-native";
 import firestore from "@react-native-firebase/firestore";
-import { launchImageLibrary } from "react-native-image-picker";
+import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 import { useAuth } from "../contexts/AuthContext";
 import { Category } from "../modals/complaint";
 import DropDownPicker from "react-native-dropdown-picker";
 import RNFS from "react-native-fs";
 import { Image as ImageCompressor } from "react-native-compressor";
 import Loader from "../components/Loader";
-
-
-// async function reverseGeocode(lat, lon){
-//   try{
-//     const res = await fetch(
-//       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
-//     );
-//     const json = await res.json();
-//     return json.display_name || `${lat}, ${lon}`;
-//   }catch(err){
-//     return `${lat}, ${lon}`;
-//   }
-// }
-
-// async function getUserLocation(){
-//   const result = await request(PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION);
-
-//   return new Promise((resolve, reject) => {
-//     if(result === RESULTS.GRANTED){
-//       Geolocation.getCurrentPosition(
-//         (position) => {
-//           resolve({
-//             latitude: position.coords.latitude,
-//             longitude: position.coords.longitude,
-//           });
-//         },
-//         (err) => reject(err),
-//         { enableHighAccuracy: true, timeout: 15000 }
-//       );
-//     }else{
-//       reject("Location permission denied");
-//     }
-//   });
-// }
+import { PermissionsAndroid, Platform } from "react-native";
+import Ionicons from '@react-native-vector-icons/ionicons';
 
 export default function RegisterComplaint() {
 
-  const { user } = useAuth();
+  const { user,userProfile } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("Other");
@@ -53,11 +21,6 @@ export default function RegisterComplaint() {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [mapVisible, setMapVisible] = useState(false);
-  const [tempLocation, setTempLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [initialRegion, setInitialRegion] = useState(null);
-  const [selectedAddress, setSelectedAddress] = useState("");
 
   const allCategories: Category[] = [
     "Road_and_Infastructure",
@@ -84,71 +47,59 @@ export default function RegisterComplaint() {
     }))
   );
 
-  async function pickImage(){
-    const result = await launchImageLibrary({mediaType: "photo"});
-    if(result.assets && result.assets[0]){
-      let fileUri = result.assets[0].uri!;
+  async function requestCamera(){
+    if(Platform.OS !== "android") return true;
 
-      const compressedUri = await ImageCompressor.compress(fileUri, {
-        maxWidth: 800,
-        quality: 0.6,
-      })
-      const base64 = await RNFS.readFile(compressedUri, "base64");
-      setImageBase64(`data:image/jpeg;base64,${base64}`);
-    }
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      {
+        title: "Camera Permission",
+        message: "App needs camera access to capture complaint photos",
+        buttonPositive: 'OK',
+        buttonNegative: "Cancel",
+      }
+    );
+
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
   }
 
-  // async function uploadImage(): Promise<string>{
-  //   if (!imageUri) return "";
+  async function captureImage(){
+    const hasPermission = await requestCamera();
+    if(!hasPermission){
+      Alert.alert("Permission denied", "Camera persmission requested");
+      return;
+    }
 
-  //   console.log("IMAGE URI = ", imageUri);
+    const result = await launchCamera({
+      mediaType: 'photo',
+      cameraType: 'back',
+      quality: 1,
+      saveToPhotos: false,
+    });
 
-  //   let path = imageUri;
-  //   if(imageUri.startsWith("content://")){
-  //     const stat = await RNFS.stat(imageUri);
-  //     path = stat.path;
-  //   }
-  //   if(path.startsWith("file://")){
-  //     path = path.replace("file://","");
-  //   }
-  //   const fileName = `complaints/${user.uid}_${Date.now()}.jpg`;
-  //   const ref = storage().ref(fileName);
+    if (result.didCancel) return;
 
-  //   console.log("UPLOAD PATH = ",path);
+    if(!result.assets || !result.assets[0]?.uri){
+      Alert.alert("Capture Failed");
+      return;
+    }
 
-  //   await ref.putFile(imageUri);
-  //   return await ref.getDownloadURL();
-  // }
+    try{
+      const originalUri = result.assets[0].uri;
 
-  // async function openMapPicker(){
-  //   try{
-  //     const pos = await getUserLocation();
+      const compressedUri = await ImageCompressor.compress(originalUri, {
+        maxWidth:800,
+        quality: 0.6,
+      });
 
-  //     setInitialRegion({
-  //       latitude: pos.latitude,
-         
-  //     })
-  //   }
-  // }
-
-  // function closeMapPicker(){
-  //   setMapVisible(false);
-  // }
-
-  // function handleMapPress(e: MapPressEvent){
-  //   const { latitude, longitude } = e.nativeEvent.coordinate;
-  //   setTempLocation({ latitude, longitude });
-  // }
-
-  // function confirmLocationFromMap(){
-  //   if(!tempLocation){
-  //     Alert.alert("Please tap on the map to choose a location.");
-  //     return;
-  //   }
-  //   setLocation(tempLocation);
-  //   setMapVisible(false);
-  // }
-
+      const base64 = await RNFS.readFile(compressedUri, 'base64');
+      ''
+      setImageBase64(`data:image/jpeg;base64,${base64}`);
+    }catch(err){
+      console.error("Image processing error", err);
+      Alert.alert("image processing failed");
+    }
+  }
   function resetform(){
     setTitle("");
     setDescription("");
@@ -156,8 +107,6 @@ export default function RegisterComplaint() {
     setAddress("");
     setImageBase64(null);
     setImageUri(null);
-    // setLocation(null);
-    // setTempLocation(null);
     setSubmitting(false);
   }
   async function submitComplaint(){
@@ -175,8 +124,9 @@ export default function RegisterComplaint() {
       }
       const docref = firestore().collection("complaints").doc()
       await docref.set({
-        user_id: user.uid, doc_id: docref.id,
+        user_id: user.uid, doc_id: docref.id, user_email: user.email,user_name: userProfile?.name,
         title, description, category, image_url: imageBase64 || "", address, submitted_at: firestore.Timestamp.now(), status:"Pending",
+        complaint_email_send: false, technician_assigned_email_send: false, compalint_resolved_email: false,
         // geo_location: location ? new firestore.GeoPoint(location.latitude, location.longitude) : null,
       });
 
@@ -200,6 +150,7 @@ export default function RegisterComplaint() {
         <View style={styles.titleRow}>
         <Text style={styles.label}>Title</Text>
         <TouchableOpacity style={styles.resetSmallButton} onPress={resetform}>
+          <Ionicons name="trash" size={16} color="#fff" />
           <Text style={styles.resetSmallText}>Reset</Text>
         </TouchableOpacity>
         </View>
@@ -231,16 +182,33 @@ export default function RegisterComplaint() {
         <TextInput style={styles.input} placeholder="Enter complaint Address" placeholderTextColor="#605e5eff" value={address} onChangeText={setAddress} />
         </View>
         <View style={{ zIndex: 1000 }}>
-        <Text style={styles.label}>Upload Image</Text>
-        {imageBase64 && (
+        <View style={styles.captureHeader}>
+          <Text style={styles.imagelabel}>Upload Image</Text>
+          {!imageBase64 ? (
+            <TouchableOpacity onPress={captureImage} style={styles.cameraIconWrapper}>
+              <Ionicons name="camera" size={16} color="#fff" />
+              <Text style={styles.retakeText}>Capture</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={captureImage} style={styles.cameraIconWrapper}>
+              <Ionicons name="refresh" size={16} color="#fff" />
+              <Text style={styles.retakeText}>Retake</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        {imageBase64 ? (
           <Image source={{ uri: imageBase64 }}
           style={{ width: '100%', height:200, borderRadius:10, marginBottom:10, marginTop:10}}/>
+        ) : (
+          <View style={styles.imagePlaceholder}>
+            <Ionicons name="image-outline" size={40} color="#9aa0a6" />
+              <Text style={styles.placeholderText}>
+                Capture image to see preview of image
+              </Text>
+          </View>
         )}
-        <TouchableOpacity style={styles.button} onPress={pickImage}>
-          <Text style={styles.buttonText}>Choose Image</Text>
-        </TouchableOpacity>
         </View>
-        <TouchableOpacity style={[styles.button, { backgroundColor: "#1f3b6e", marginTop: 20 }]} 
+        <TouchableOpacity style={[styles.button, { backgroundColor: "#7abb6d", marginTop: 20 }]} 
         onPress={submitComplaint} disabled={submitting}>
           <Text style={styles.buttonText}>{ submitting ? "Submitting....": "Submit Compalint"}</Text>
         </TouchableOpacity>
@@ -284,20 +252,31 @@ const styles = StyleSheet.create({
   },
 
   resetSmallButton: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#ff4d4d",
-    paddingVertical: 5,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 6,
+    marginRight:4
   },
 
   resetSmallText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 13,
+   color: "#fff",
+  fontSize: 12,
+  fontWeight: "600",
+  marginLeft: 4,
   },
 
   label: {
     marginTop: 15,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1f3b6e",
+  },
+
+  imagelabel:{
+    marginTop: 11,
     fontSize: 15,
     fontWeight: "600",
     color: "#1f3b6e",
@@ -350,6 +329,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
+    width: 170,
+    alignSelf: 'center'
   },
 
   buttonText: {
@@ -357,4 +338,50 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 15,
   },
+
+  captureHeader: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 2
+},
+
+cameraIconWrapper: {
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: "#1f3b6e",
+  paddingHorizontal: 10,
+  paddingVertical: 6,
+  borderRadius: 16,
+  marginTop: 15
+},
+
+retakeText: {
+  color: "#fff",
+  fontSize: 12,
+  fontWeight: "600",
+  marginLeft: 4,
+},
+
+imagePlaceholder: {
+  width: "100%",
+  height: 200,
+  borderRadius: 10,
+  borderWidth: 1.5,
+  borderStyle: "dashed",
+  borderColor: "#cfcfcf",
+  backgroundColor: "#fafafa",
+  justifyContent: "center",
+  alignItems: "center",
+  marginTop: 10,
+  paddingHorizontal: 20,
+},
+
+placeholderText: {
+  marginTop: 10,
+  fontSize: 13,
+  color: "#7a7a7a",
+  textAlign: "center",
+  lineHeight: 18,
+},
 });

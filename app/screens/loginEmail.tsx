@@ -6,12 +6,13 @@ import Ionicons from '@react-native-vector-icons/ionicons';
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthStackParamList } from "../navigation/types";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../contexts/AuthContext";
 
 type LoginNavProp = NativeStackNavigationProp<AuthStackParamList, "LoginEmail">;
 
 export default function LoginEmailPage() {
   const navigation = useNavigation<LoginNavProp>();
-
+  const {setAuthType} = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,8 +41,8 @@ export default function LoginEmailPage() {
     try {
       const user = await loginWithEmail(email, password);
       console.log("Logged in:", user.uid);
-
-      navigation.navigate("AppTabs"); 
+      
+      setAuthType('user'); 
     } catch (err: any) {
       console.error(err);
 

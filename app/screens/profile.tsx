@@ -52,14 +52,14 @@ export default function Profile() {
         <Text style={styles.label}>App Version</Text>
         <Text style={styles.value}>{appVersion}</Text>
          <Text style={styles.label}>Privacy Policy</Text>
-        <Text style={styles.valueSmall}>
+        <Text style={styles.valueAppInformation}>
           We only collect basic account information
           to manage your profile and handle complaint submissions. Your data is
           never shared with third parties.
         </Text>
 
         <Text style={styles.label}>Terms of Service</Text>
-        <Text style={styles.valueSmall}>
+        <Text style={styles.valueAppInformation}>
           By using this app, you agree to submit accurate information and avoid
           misuse of the complaint system. Improper or abusive submissions may
           result in account restrictions.
@@ -123,19 +123,28 @@ const styles = StyleSheet.create({
 
   label: {
     fontSize: 13,
-    color: "#888",
+    color: "#6B7280",
     marginTop: 10,
   },
 
   value: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1f3b6e",
+    color: "#1E293B",
+  },
+
+  valueAppInformation: {
+    fontSize: 14,
+    color: "#1E293B",
+    marginTop: 5,
+    lineHeight: 20,
+    textAlign: "justify",
+    fontWeight: '400'
   },
 
   valueSmall: {
     fontSize: 14,
-    color: "#1f3b6e",
+    color: "#374151",
     marginTop: 5,
     lineHeight: 20,
     textAlign: "justify"
@@ -155,7 +164,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   bottomBlue: {
-    height: "24%",
+    height: "18%",
     backgroundColor: "#1f3b6e",
     borderTopLeftRadius: 50,
     borderTopRightRadius: 50,
