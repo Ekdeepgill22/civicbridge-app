@@ -6,11 +6,13 @@ import { AuthStackParamList } from "../navigation/types";
 import { signupWithEmail,createUser,emailUserExixts} from "../services/authservice";
 import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 import Ionicons from '@react-native-vector-icons/ionicons';
+import { useAuth } from "../contexts/AuthContext";
 
 type EmailSignupNavProp = NativeStackNavigationProp<AuthStackParamList, "EmailSignup">;
 
 export default function EmailSignupPage() {
   const navigation = useNavigation<EmailSignupNavProp>();
+  const {setAuthType} = useAuth();
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -52,13 +54,12 @@ export default function EmailSignupPage() {
 
       const user = await signupWithEmail(email, password);
 
-      const userData = { user_id: user.uid, name,address,city,email,created_at: firestore.Timestamp.now()};
+      const userData = { user_id: user.uid, name,address,city,email,created_at: firestore.Timestamp.now(), account_email_send:false};
 
       await createUser(user.uid, userData);
 
       Alert.alert("Success", "Account created successfully!");
-
-      navigation.navigate("AppTabs");
+      setAuthType('user');
     } catch (err: any) {
       console.error("Signup error:", err);
       setError(err.message || "Signup failed.");
